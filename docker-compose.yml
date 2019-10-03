@@ -1,0 +1,39 @@
+version: "3"
+services:
+  web:
+    image: nginx
+    ports:
+    - "8087:80"
+    volumes:
+    - ./code:/code
+    - ./site.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+    - php
+    networks:
+    - face-network
+  mysql:
+    image: mysql:5.6
+    volumes:
+    - ./dbdata:/var/lib/mysql
+    - ./mysql.cnf:/etc/mysql/mysql.conf.d/mysql.cnf
+    ports:
+    - "3307:3306"
+    environment:
+      MYSQL_USER: root
+      MYSQL_PASSWORD: hCR1B5MWvE7ILfE2
+      MYSQL_ROOT_PASSWORD: hCR1B5MWvE7ILfE2
+    networks:
+    - face-network
+  php:
+    # image: php-cy:v1
+    build: ./php
+    volumes:
+    - ./code:/code
+    ports:
+    - "9001:9000"
+    networks:
+    - face-network
+
+networks:
+  face-network:
+    driver: bridge

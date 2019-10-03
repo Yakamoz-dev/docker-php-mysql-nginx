@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html  dir="ltr">
+<head>
+    <meta charset="utf-8">
+    <title>人脸特征采集</title>
+	<style type="text/css">
+			*,body{
+				padding: 0;
+				margin:0;
+			}
+            /*#webcam {
+                width: auto;
+                height: auto;
+                float: left;
+            }
+            #base64image {
+                display: block;
+                width: 320px;
+                height: 240px;
+            }*/
+            .content{
+            	margin: 20px
+            }
+            .info{
+            	margin-bottom: 20px;
+            	width: 320px
+            }
+            .info span{
+            	font-size:18px;
+            }
+            .info input{
+            	width: 200px;
+            	height: 30px;
+            	margin-left: 15px;
+            	padding: 0 10px
+            }
+            .textcenter{
+            	text-align: center;
+            }
+            .textcenter input{
+            	margin-top: 10px;
+            	cursor: pointer;
+            	border:1px solid #698df7;
+            	background: #698df7;
+            	color:#ffffff;
+            	outline: none;
+            	transition: all .3s ease-in;
+            }
+            .textcenter input:hover{
+            	background:#1d51e9;
+            	border:1px solid #1d51e9;
+            	color: #ffffff;
+            	transition: all .3s ease-in;
+            	outline: none;
+            }
+            .check{
+            	text-align: left!important;
+            }
+            .check input{
+            	margin-left: 0!important;
+            	cursor: pointer;
+            }
+            .showface{
+            	/*display: none;*/
+            }
+        </style>
+
+    <!-- 基本的jquery引用，1.5版本以上 -->
+    <script src="js/jquery-1.8.3.min.js"></script>
+	
+    <!-- webcam插件引用 -->
+    <script src="js/jquery.webcam.js"></script>
+  </head>
+<body>
+<div class="content">
+	<div class="info"><span>姓名:</span><input type="text" id="name" name="name"></div>
+	<div class="info"><span>年龄:</span><input type="text" id="age"name="age"></div>
+	<div id="webcam"></div>
+	<div class="info textcenter"><input id="snapBtn" type="button" value="拍照" /></div>
+	 <canvas id="canvas" ></canvas>
+	 <img id="base64image" src='' />
+	 <div class="showface">
+		 <div class="info"><span>人脸标记：</span></div>
+		 <div><img id="base64imagetemp" src='' /></div>
+		  <div class="info check textcenter"><input id="checkFace" onclick="checkFace()" type="button" value="人脸检测"></div>
+		 <div class="info check textcenter"><input type="button" id="getNum" onclick="getNum()" value="提交" /></div>
+	 </div>
+</div>
+	
+</body>
+
+<script type="text/javascript">
+
+var canvas = document.getElementById("canvas");
+var pos = 0,
+ctx = null,
+image = [];
+var w = 320;
+var h = 240;
+canvas.setAttribute('width', w);
+canvas.setAttribute('height', h);
+    $(document).ready(function() {
+	$("#webcam").webcam({
+		width: 320,
+        height: 240,
+        mode: "callback",
+        swffile: "js/jscam_canvas_only.swf", // 这里引入swf文件，注意路径
+        onTick: function(remain) {},
+        onSave: function(data) {
+
+			var col = data.split(";");
+			var img = image;
+
+			for(var i = 0; i < 320; i++) {
+				var tmp = parseInt(col[i]);
+				img.data[pos + 0] = (tmp >> 16) & 0xff;
+				img.data[pos + 1] = (tmp >> 8) & 0xff;
+				img.data[pos + 2] = tmp & 0xff;
+				img.data[pos + 3] = 0xff;
+				pos += 4;
+			}
+			if(pos >= 4 * 320 * 240) {			
+			// 将图片显示到canvas中
+			ctx.putImageData(img, 0, 0);				
+			// 取得图片的base64码
+			var base64 = canvas.toDataURL("image/jpeg");                    
+			// 将图片base64码设置给img
+			var base64image = document.getElementById('base64image');
+			base64image.setAttribute('src', base64);
+			pos = 0;
+
+			
+
+			}
+
+        },
+
+        onCapture: function() {
+            webcam.save();
+            // $(".showface").show();
+            // Show a flash for example
+        },
+
+        debug: function(type, string) {
+            console.log('type:' + type + ',string:' + string);
+            // Write debug information to console.log() or a div
+        },
+
+        onLoad: function() {
+             // Page load
+        }
+
+	});
+window.addEventListener("load", function() {
+
+    if(canvas.getContext) {
+		ctx = canvas.getContext("2d");
+		ctx.clearRect(0, 0, 320, 240);
+
+		var img = new Image();
+		img.onload = function() {
+			ctx.drawImage(img, 129, 89);
+		}
+		image = ctx.getImageData(0, 0, 320, 240);
+    }
+}, false);
+
+$('#snapBtn').on('click', function() {
+    webcam.capture();
+    });
+});
+
+
+function getNum(){
+	var src = $('img').attr('src');
+	alert(src)
+	console.log($("#name").val() + $("#age").val());
+	var fileName = Math.random().toString(36).substr(2);
+	fileName = fileName +".jpg"
+	alert(fileName)
+	var fileObj = dataURLtoFile(src, fileName)
+	// FormData 对象
+	
+	var form = new FormData();
+	form.append("file", fileObj);// 文件对象
+	form.append("name", $("#name").val())
+	form.append("age", $("#age").val())
+	var data = form;
+	$.ajax({
+               url: "/todo/api/v1.0/video",
+               data: data,
+               type: "POST",
+               dataType: "json",
+               processData: false,//用于对data参数进行序列化处理 这里必须false
+              contentType: false, //必须
+              success: function (result) {
+			  alert("result!!!!" +result.success)
+                if (result.success == true){
+					alert("保存成功！")
+				}else{
+					alert("保存失败")
+				}
+              }
+    })
+}
+
+function checkFace(){
+	var src = $('img').attr('src');
+
+	var mydate = new Date();
+	var fileName = Math.random().toString(36).substr(2);
+	fileName = fileName +".jpg"
+	alert(fileName)
+	//var fileObj = dataURLtoFile(src, fileName)
+	// FormData 对象
+	var fileObj = dataURLtoBlob(src)
+	var form = new FormData();
+	form.append("file", fileObj, fileName);// 文件对象
+	var data = form;
+	$.ajax({
+               url: "/todo/api/v1.0/checkface",
+               data: data,
+               type: "POST",
+               dataType: "json",
+               processData: false,//用于对data参数进行序列化处理 这里必须false
+              contentType: false, //必须
+              success: function (result) {
+			  alert("result=" +result.data)
+                if (result.success == true){
+					var base64imagetemp = document.getElementById('base64imagetemp');
+					var resutldata = result.data
+					console.log("base64地址："+resutldata)
+					var last = resutldata.lastIndexOf('\'')
+					resutldata = resutldata.substring(2, last)
+					var resultImg = "data:image/jpeg;base64," + resutldata;
+					console.log(resultImg)
+					base64imagetemp.setAttribute('src', resultImg);
+				}else{
+					alert("保存失败")
+				}
+              }
+    })
+}
+
+function dataURLtoFile(dataurl, filename) {//将base64转换为文件
+    var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+    bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+    while(n--){
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, {type:mime});
+}
+
+
+//将base64转换为blob
+function dataURLtoBlob(dataurl) {
+	var arr = dataurl.split(','),mime = arr[0].match(/:(.*?);/)[1],
+    bstr =atob(arr[1]), n = bstr.length,  u8arr =new Uint8Array(n);    
+	while (n--) {
+		u8arr[n] = bstr.charCodeAt(n);    
+	}
+	return new Blob([u8arr], {type: mime });
+}
+
+//将blob转换成file
+function blobToFile(theBlob, fileName){
+	theBlob.lastModifiedDate =new Date();    
+	theBlob.name = fileName;    
+	return theBlob;
+}
+
+</script>
+</html>

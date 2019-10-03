@@ -1,0 +1,74 @@
+<html>
+<head><meta charset="utf-8"></head>
+<style>
+.content{
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%,-50%);
+	-webkit-transform: translate(-50%,-50%);
+	-ms-transform:translate(-50%,-50%);
+}
+button{
+	width: 300px;
+	height: 60px;
+	border: none;
+	cursor: pointer;
+	background: none;
+	font-size: 20px;
+	font-family: '宋体'
+}
+.play{
+
+}
+.info{
+		margin-top: 20px
+}
+.play button{
+	background: blue!important;
+	color:#fff;
+}
+.info button{
+	border: 1px solid blue;
+}
+</style>
+<body>
+<script src="js/jquery-3.3.1.js"></script>
+<div class="content">
+<div class="play"><button type="button" onclick="playVideo()">实时播放</button></div>
+<div class="info"><button type="button" onclick="getInfo()">信息采集</button></div>
+</div>
+</body>
+<script>
+var param="?";
+function playVideo(){
+	$.ajax({
+		url: "/todo/api/v1.0/geturl?num=0",
+		type: "GET",
+		dataType: "json",
+		success: function (result) {
+		console.log("result=" +result.data)
+			if (result.success == true){
+				urls = result.data;
+				//console.log("url条数："+urls.length)
+				var size = urls.length;
+				for(var i=0;i<size;i++){
+					param = param + "url"+i+"="+urls[i]+"&";
+				}
+				console.log(param)
+				nextpage = "video.html"+param;
+				
+				console.log("跳转地址"+nextpage)
+				window.location.href=nextpage;
+			}else{
+				alert("获取直播链接失败！")
+			}
+		}
+	})
+}
+
+function getInfo(){
+ window.location.href="info.html";
+}
+</script>
+</html>

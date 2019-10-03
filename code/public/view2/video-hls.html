@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+        <meta charset="utf-8">
+		</head>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<script src="js/jquery-3.3.1.js"></script>
+<video id="video"></video>
+<input type="button" id="interception" value="截图">
+<img id="VideoPoster" src="">
+<script>
+  if(Hls.isSupported()) {
+    var video = document.getElementById('video');
+    var hls = new Hls();
+    hls.loadSource('http://192.168.2.151/hls/test.m3u8');
+    hls.attachMedia(video);
+    hls.on(Hls.Events.MANIFEST_PARSED,function() {
+      video.play();
+  });
+ }
+ 
+ 
+ $('#interception').on('click',function(){
+	   var video2 = $('#video').get(0);
+	   console.log(video2)
+       if (typeof(video2.currentTime) == "undefined" || video2.currentTime <= 0) {
+           alert('请播放视频，在合适的位置点击该按钮');
+           return;
+       }
+       var scale = 0.25;//比例
+       var canvas = document.createElement("canvas");//创建一个画布对象
+	   console.log(canvas);
+	   console.log(video2.videoWidth);
+	   console.log(video2.videoHeight);
+       canvas.width = video2.videoWidth * scale;//封面图片的宽采用视频宽度的0.25倍
+       canvas.height = video2.videoHeight * scale;//同上
+       canvas.getContext('2d').drawImage(video2, 0, 0, canvas.width, canvas.height);//生成图片
+	   alert(canvas.toDataURL())
+       $('#VideoPoster').attr('src', canvas.toDataURL());//设置图片的base64格式数据流
+       
+})
+</script>
+    </body>
+
+</html>
